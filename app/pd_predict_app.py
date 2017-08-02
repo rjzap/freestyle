@@ -11,7 +11,10 @@ from operator import itemgetter
 import pandas as pd
 import numpy as np
 import pyodbc
+from datetime import datetime
 
+datetime.now().strftime('%Y%m%d_%H%M%S')
+timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 # paramerters
 #server = "localhost"
 #db = "lc_loan_stats"
@@ -165,3 +168,8 @@ x_train3 = df_train[depvar_ftrs_post_gbst_fe]
 x_test3 = df_test[depvar_ftrs_post_gbst_fe]
 
 grad_bst_prediction(x_train3, y_train, x_test3, y_test)
+
+df_out = df_test
+gbst_predict = pd.DataFrame(gbst_pred)
+df_out = df_out.assign(predicted_status_gbc = gbst_predict.values)
+df_out.to_csv("data\output\LoanStats_predict_"+timestamp+".csv")
