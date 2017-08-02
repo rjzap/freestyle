@@ -121,7 +121,7 @@ def grad_bst_prediction(x_train, y_train, x_test, y_test):
 
 
 ### SPLIT LOADED DATA FRAME INTO TRAINING AND TESTING SUBSETS
-df_train, df_test = train_test_split(df, test_size=0.2) ##test size parameter determins the size of the test as as a percentage
+df_train, df_test = train_test_split(df, test_size=0.3) ##test size parameter determins the size of the test as as a percentage
 depvar_ftrs = depvar_select(ftr_names, exclude_ftr)
 
 x_train = df_train[depvar_ftrs]
@@ -143,9 +143,9 @@ y_test = df_test[indvar_ftr]
 #print trees_ftr_elim ##check features with 0 importance factor are added to the exlcusion list
 
 ###RUN ExtraTreesClassifier again with refined feature list to mitigate overfitting
-depvar_ftrs_postfe = depvar_select(ftr_names, trees_ftr_elim)
-x_train2 = df_train[depvar_ftrs_postfe]
-x_test2 = df_test[depvar_ftrs_postfe]
+depvar_ftrs_post_trees_fe = depvar_select(ftr_names, trees_ftr_elim)
+x_train2 = df_train[depvar_ftrs_post_trees_fe]
+x_test2 = df_test[depvar_ftrs_post_trees_fe]
 
 #extra_trees_prediction(x_train2, y_train, x_test2, y_test)
 
