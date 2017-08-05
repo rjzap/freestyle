@@ -2,12 +2,13 @@ from sklearn import datasets
 from sklearn import metrics
 from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.ensemble import ExtraTreesClassifier as etc
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import classification_report
 from sklearn.feature_selection import RFE
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import GradientBoostingClassifier as gbc
 from operator import itemgetter
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import pyodbc
@@ -55,6 +56,27 @@ cls_rpt_help = """
 def depvar_select(x, y):
     return [c for c in x if c not in y]
 
+def cm(y_test, prediction_list):
+    df_confusion = pd.crosstab(y_test, prediction_list, rownames=['Actual'], colnames=['Predicted'], margins = False)
+    print "\n Confustion Matrix, without normalization:\n"
+    print df_confusion
+    df_confusion_norm = df_confusion / df_confusion.sum()
+print "\n Confustion Matrix, with normalization:\n"
+    print df_confusion_norm
+    plot_confusion_matrix(df_confusion)
+    plot_confusion_matrix(df_confusion_norm)
+
+def plot_confusion_matrix(df_confusion, title='Confusion matrix', cmap=plt.cm.gray_r):
+    plt.matshow(df_confusion, cmap=cmap) # imshow
+    #plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(df_confusion.columns))
+    plt.xticks(tick_marks, df_confusion.columns, rotation=45)
+    plt.yticks(tick_marks, df_confusion.index)
+    #plt.tight_layout()
+    plt.ylabel(df_confusion.index.name)
+    plt.xlabel(df_confusion.columns.name)
+    plt.show()
 
 def extra_trees_prediction(x_train, y_train, x_test, y_test):
     trees = etc()
@@ -72,6 +94,7 @@ def extra_trees_prediction(x_train, y_train, x_test, y_test):
         print "{}. {}: %.5f".format(i+1, trees_ftr_eval[i]["name"].title()) % trees_ftr_eval[i]["score"]
     print "\nNumber of mislabeled points out of a total %d points : %d" % (x_test.shape[0], (y_test != trees_pred).sum())
     print classification_report(y_test, trees_pred)
+    cm(y_test, trees_pred)
     return trees_ftr_elim
 
 def log_regr_prediction(x_train, y_train, x_test, y_test):
@@ -141,7 +164,7 @@ y_test = df_test[indvar_ftr]
 
 ##FIT AND EMPLOY ExtraTreesClassifier TO PREDICT DEFAULT AND EVALUATE FEATURE IMPORTANCE
 
-#extra_trees_prediction(x_train, y_train, x_test, y_test)
+extra_trees_prediction(x_train, y_train, x_test, y_test)
 
 #print trees_ftr_elim ##check features with 0 importance factor are added to the exlcusion list
 
@@ -161,15 +184,15 @@ x_test2 = df_test[depvar_ftrs_post_trees_fe]
 
 ###RUN GradientBoostingClassifier to predict defaul and evaluate feature importance
 
-grad_bst_prediction(x_train, y_train, x_test, y_test)
+#grad_bst_prediction(x_train, y_train, x_test, y_test)
 
 depvar_ftrs_post_gbst_fe = depvar_select(ftr_names, gbst_ftr_elim)
 x_train3 = df_train[depvar_ftrs_post_gbst_fe]
 x_test3 = df_test[depvar_ftrs_post_gbst_fe]
 
-grad_bst_prediction(x_train3, y_train, x_test3, y_test)
+#grad_bst_prediction(x_train3, y_train, x_test3, y_test)
 
-df_out = df_test
-gbst_predict = pd.DataFrame(gbst_pred)
-df_out = df_out.assign(predicted_status_gbc = gbst_predict.values)
-df_out.to_csv("data\output\LoanStats_predict_"+timestamp+".csv")
+#df_out = df_test
+#gbst_predict = pd.DataFrame(gbst_pred)
+#df_out = df_out.assign(predicted_status_gbc = gbst_predict.values)
+#df_out.to_csv("data\output\LoanStats_predict_"+timestamp+".csv")
