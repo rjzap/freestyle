@@ -35,8 +35,10 @@ trees_ftr_elim = exclude_ftr
 gbst_ftr_elim = exclude_ftr
 
 welcome = """
+    ---------------------------------------------------------------------
+    ---------------------------------------------------------------------
     \nWelcome {}, your loan data input file '{}' has been loaded into a data frame with dimensions:
-    {}.
+    {} (rows, columns)
 
     These loan statistics will be evaluated via the following machine learning algorithms for both prediction and feature evaluation purposes:
 
@@ -47,13 +49,14 @@ welcome = """
 
     This applicaiton will generate three '.csv' output files:
 
-        + 'LoanStats_predict_' file
+        + 'LoanStats_predict_'
         + 'ML_Ensemble_FeatureEval_'
         + 'ML_RFE_FeatureEval_'
 
-    You may review results on screen, or in the output files.\n""".format(uid, filepath, df.shape)
-
-
+    You may review results on screen, or in the output files.
+    If you elect to rerun predicitons with refined variable sets based on feature evaluation, there will be additional files generated for those variable sets.
+    ---------------------------------------------------------------------
+    ---------------------------------------------------------------------\n""".format(uid, filepath, df.shape)
 divider = "---------------------------------------------------------------------"
 cls_rpt_help = """
     The precision is the ratio tp / (tp + fp) where tp is the number of true positives and fp the number of false positives. The precision is intuitively the ability of the classifier not to label as positive a sample that is negative\n.
@@ -82,12 +85,12 @@ def plot_confusion_matrix(df_confusion, title='Confusion matrix', cmap=plt.cm.gr
     plt.show()
 
 def cm(y_test, prediction_list):
-    df_confusion = pd.crosstab(y_test, prediction_list, rownames=['Actual'], colnames=['Predicted'], margins = False)
-    print "\n Confustion Matrix, without normalization:\n"
+    df_confusion = pd.crosstab(y_test, prediction_list, rownames=['Actual'], colnames=['Predicted'], margins = True)
+    print "\n Confusion Matrix, without normalization:\n"
     print df_confusion
     #df_confusion_norm = df_confusion / df_confusion.sum(axis = 1)
     df_confusion_norm = pd.crosstab(y_test, prediction_list, rownames=['Actual'], colnames=['Predicted'], margins = False, normalize = "index" )
-    print "\n Confustion Matrix, with normalization:\n"
+    print "\n Confusion Matrix, with normalization:\n"
     print df_confusion_norm
     plot_confusion_matrix(df_confusion)
     plot_confusion_matrix(df_confusion_norm)
@@ -103,6 +106,8 @@ def extra_trees_prediction(x_train, y_train, x_test, y_test):
         print "\nExtra Trees Classification Report:\n"
         print classification_report(y_test, trees_pred)
         print divider
+        cm(y_test, trees_pred)
+        print divider
     return trees_pred
 
 def grad_bst_prediction(x_train, y_train, x_test, y_test):
@@ -114,6 +119,8 @@ def grad_bst_prediction(x_train, y_train, x_test, y_test):
         print "\nGradient Boosting Classifier mislabeled %d points out of a total of %d points" % ((y_test != gbst_pred).sum(), x_test.shape[0])
         print "\nGradient Boosting Classification Report:\n"
         print classification_report(y_test, gbst_pred)
+        print divider
+        cm(y_test, gbst_pred)
         print divider
     else: pass
     return gbst_pred
@@ -130,6 +137,8 @@ def log_regr_prediction(x_train, y_train, x_test, y_test):
         print "\nLogistic Regression Classification Report:\n"
         print classification_report(y_test, logreg_pred)
         print divider
+        cm(y_test, logreg_pred)
+        print divider
     else: pass
     return logreg_pred
 
@@ -144,6 +153,8 @@ def gaussian_nb_prediction(x_train, y_train, x_test, y_test):
         print "\nThe Gaussian Naive Bayes Classifier accuracy score is: ", gnb_accuracy
         print "\nGaussian Naive Bayes Classification Report:\n"
         print classification_report(y_test, gnb_pred)
+        print divider
+        cm(y_test, gnb_pred)
         print divider
     else: pass
     return gnb_pred
@@ -208,8 +219,9 @@ def recursive_ftr_elim(model, x_train, y_train, desired_nmbr_ftrs):
     return rfe_ftr_eval
 
 ###Output functions
-def output(df_test, x_train, y_train, x_test, y_test):
+def output(ftr_set, df_test, x_train, y_train, x_test, y_test):
     df_out = df_test
+    ftr_vrsn = ftr_set
     etc_predict = pd.DataFrame(extra_trees_prediction(x_train, y_train, x_test, y_test))
     df_out = df_out.assign(predicted_status_etc = etc_predict.values)
     gbst_predict = pd.DataFrame(grad_bst_prediction(x_train, y_train, x_test, y_test))
@@ -218,26 +230,8 @@ def output(df_test, x_train, y_train, x_test, y_test):
     df_out = df_out.assign(predicted_status_logreg = logreg_predict.values)
     gnb_predict = pd.DataFrame(gaussian_nb_prediction(x_train, y_train, x_test, y_test))
     df_out = df_out.assign(predicted_status_nb = gnb_predict.values)
-    df_out.to_csv("data\output\prediction\LoanStats_predict_"+timestamp+".csv")
+    df_out.to_csv("data\output\prediction\LoanStats_predict_" + timestamp + ftr_vrsn + ".csv")
     return df_out
-
-def confusion_review(x_train, y_train, x_test, y_test):
-    etc_predict = extra_trees_prediction(x_train, y_train, x_test, y_test)
-    print divider
-    cm(y_test, etc_predict)
-    print divider
-    gbst_predict = grad_bst_prediction(x_train, y_train, x_test, y_test)
-    print divider
-    cm(y_test, gbst_predict)
-    print divider
-    logreg_predict = log_regr_prediction(x_train, y_train, x_test, y_test)
-    print divider
-    cm(y_test, logreg_predict)
-    print divider
-    gnb_predict = gaussian_nb_prediction(x_train, y_train, x_test, y_test)
-    print divider
-    cm(y_test, gnb_predict)
-    print divider
 
 def ens_feature_output(x_train, y_train, x_test, y_test):
     etc_ftr_rank = pd.DataFrame(extra_trees_ftr_eval(x_train, y_train, x_test, y_test))
@@ -256,7 +250,8 @@ def rfe_feature_output(x_train, y_train, x_test, y_test):
     pd.concat([rfe_tree, rfe_log, rfe_gbst], axis = 1).to_csv("data\output\Feature_eval\RFE_feature_eval\ML_RFE_FeatureEval_"+timestamp+".csv")
 
 ### SPLIT LOADED DATA FRAME INTO TRAINING AND TESTING SUBSETS
-df_train, df_test = train_test_split(df, test_size=0.3) ##test size parameter determins the size of the test as as a percentage
+
+df_train, df_test = train_test_split(df, test_size=0.3) ##test size parameter determins the size of the test set as as a percentage
 depvar_ftrs = depvar_select(ftr_names, exclude_ftr)
 
 x_train = df_train[depvar_ftrs]
@@ -281,28 +276,21 @@ x_train3 = df_train[depvar_ftrs_post_gbst_fe]
 x_test3 = df_test[depvar_ftrs_post_gbst_fe]
 
 print welcome
-
 on_scrn = raw_input("\nWould you like to review prediction results on screen? Type 'Yes' or 'No'\n").title()
-
-output(df_test, x_train, y_train, x_test, y_test)
-
+output("base_", df_test, x_train, y_train, x_test, y_test)
 if on_scrn == "Yes":
     c_rpt_hlp = raw_input("\nDo you require an explanation of the Classification Report? Type 'Yes' or 'No'\n").title()
     if c_rpt_hlp == "Yes":
         print cls_rpt_help
     else: pass
 else: pass
-
-matrix_on_scrn = raw_input("\nWould you like to review confusion matrices for predictions on screen? Type 'Yes' or 'No'\n").title()
-
-if matrix_on_scrn == "Yes":
-    confusion_review(x_train, y_train, x_test, y_test)
+eval_on_scrn = raw_input("\nWould you like to review feature evaluation results on screen? Type 'Yes' or 'No'\n").title()
+ens_feature_output(x_train, y_train, x_test, y_test)
+re_run_ens = raw_input("\nWould you like to re-run predictions with refined variable lists based on feature evaluation results? Type 'Yes' or 'No'\n").title()
+if re_run_ens == "Yes":
+    output("depvar_etc_fe_", df_test, x_train2, y_train, x_test2, y_test)
+    output("depvar_gbc_fe_", df_test, x_train3, y_train, x_test3, y_test)
 else: pass
 
-eval_on_scrn = raw_input("\nWould you like to review feature evaluation results on screen? Type 'Yes' or 'No'\n").title()
-
-#ens_feature_output(x_train, y_train, x_test, y_test)
-
 rfe_on_scrn = raw_input("\nWould you like to review feature elimination results on screen? Type 'Yes' or 'No'\n").title()
-
-#rfe_feature_output(x_train, y_train, x_test, y_test)
+rfe_feature_output(x_train, y_train, x_test, y_test)
