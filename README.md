@@ -40,3 +40,19 @@ pip install -r requirements.txt
 
 As configured, the application requires a directory structure as established in this repository.  The code will not run if output directories matching the filepaths in
 the code are not present.  However, filepaths are configured as global variables in the first portion of the code and can be specified there.  
+
+## Installation
+Download the source code:
+
+```shell
+git clone https://github.com/rjzap/freestyle
+cd freestyle\pd_predict_master
+```
+
+Ensure the example data upload file is available in the data directory, otherwise place a desired file in the data folder and update the input_filepath variable in the
+source code.  
+
+## Running the app
+```
+python app\pd_predict_app.py
+```
