@@ -5,7 +5,7 @@ A project written in Python to see how several sklearn machine learning algorith
 This project is intended to provide some introductory insights into machine learning applications within finance by leveraging several common and
 readily approachable machine learning algorithms from the sklearn library to evaluate loan statistics.
 The application employs the following algorithms:  
-  - Extra Trees Cloassifier
+  - Extra Trees Classifier
   - Gradient Boosting Classifier
   - Logistic Regression
   - Gaussian Naive Bayes Classifier
