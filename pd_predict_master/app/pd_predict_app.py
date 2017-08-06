@@ -17,10 +17,13 @@ import getpass
 uid = getpass.getuser()
 datetime.now().strftime('%Y%m%d_%H%M%S')
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-filepath = 'data\LoanStats3a_20170620_v13.csv'
+input_filepath = 'data\LoanStats3a_20170620_v13.csv'
+predict_out_path = "data\output\prediction\LoanStats_predict_"
+eval_out_path = "data\output\Feature_eval\ensemble_feature_eval\ML_Ensemble_FeatureEval_"
+elim_out_path = "data\output\Feature_eval\RFE_feature_eval\ML_RFE_FeatureEval_"
 
 ### READ IN DATA
-df = pd.read_csv(filepath)
+df = pd.read_csv(input_filepath)
 
 ### UNCOMMENT FOLLOWING LINES TO CONFIRM DATA LOAD
 #print df.shape ## returns (rows, columns)
@@ -56,7 +59,7 @@ welcome = """
     You may review results on screen, or in the output files.
     If you elect to rerun predicitons with refined variable sets based on feature evaluation, there will be additional files generated for those variable sets.
     ---------------------------------------------------------------------
-    ---------------------------------------------------------------------\n""".format(uid, filepath, df.shape)
+    ---------------------------------------------------------------------\n""".format(uid, input_filepath, df.shape)
 divider = "---------------------------------------------------------------------"
 cls_rpt_help = """
     The precision is the ratio tp / (tp + fp) where tp is the number of true positives and fp the number of false positives. The precision is intuitively the ability of the classifier not to label as positive a sample that is negative\n.
@@ -230,7 +233,7 @@ def output(ftr_set, df_test, x_train, y_train, x_test, y_test):
     df_out = df_out.assign(predicted_status_logreg = logreg_predict.values)
     gnb_predict = pd.DataFrame(gaussian_nb_prediction(x_train, y_train, x_test, y_test))
     df_out = df_out.assign(predicted_status_nb = gnb_predict.values)
-    df_out.to_csv("data\output\prediction\LoanStats_predict_" + timestamp + ftr_vrsn + ".csv")
+    df_out.to_csv(predict_out_path + timestamp + ftr_vrsn + ".csv")
     return df_out
 
 def ens_feature_output(x_train, y_train, x_test, y_test):
@@ -238,7 +241,7 @@ def ens_feature_output(x_train, y_train, x_test, y_test):
     etc_ftr_rank.columns = ["etc_ftr_nm", "etc_ftr_scr"]
     gbst_ftr_rank = pd.DataFrame(grad_bst_ftr_eval(x_train, y_train, x_test, y_test))
     gbst_ftr_rank.columns = ["gbst_ftr_nm", "gbst_ftr_scr"]
-    pd.concat([etc_ftr_rank, gbst_ftr_rank], axis = 1).to_csv("data\output\Feature_eval\ensemble_feature_eval\ML_Ensemble_FeatureEval_"+timestamp+".csv")
+    pd.concat([etc_ftr_rank, gbst_ftr_rank], axis = 1).to_csv(eval_out_path + timestamp + ".csv")
 
 def rfe_feature_output(x_train, y_train, x_test, y_test):
     rfe_tree = pd.DataFrame(recursive_ftr_elim(etc(), x_train, y_train, 1))
@@ -247,7 +250,7 @@ def rfe_feature_output(x_train, y_train, x_test, y_test):
     rfe_gbst.columns = ["gbst_ftr_nm", "gbst_ftr_rank"]
     rfe_log = pd.DataFrame(recursive_ftr_elim(LogisticRegression(), x_train, y_train, 1))
     rfe_log.columns = ["log_regr_ftr_nm", "log_regr_ftr_rank"]
-    pd.concat([rfe_tree, rfe_log, rfe_gbst], axis = 1).to_csv("data\output\Feature_eval\RFE_feature_eval\ML_RFE_FeatureEval_"+timestamp+".csv")
+    pd.concat([rfe_tree, rfe_log, rfe_gbst], axis = 1).to_csv(elim_out_path + timestamp + ".csv")
 
 ### SPLIT LOADED DATA FRAME INTO TRAINING AND TESTING SUBSETS
 
