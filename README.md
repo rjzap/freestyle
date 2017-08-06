@@ -33,9 +33,10 @@ recursive feature elimination ranks are included in the output files.
 This package assumes the user is using Python 2.x.  There are likely some adjustments necessary to the base code to enable Python 3.
 
 Expected package dependencies are listed in the "requirements.txt" file for PIP.  User will need to run the following:
-'''
+
+```
 pip install -r requirements.txt
-'''
+```
 
 As configured, the application requires a directory structure as established in this repository.  The code will not run if output directories matching the filepaths in
 the code are not present.  However, filepaths are configured as global variables in the first portion of the code and can be specified there.  
