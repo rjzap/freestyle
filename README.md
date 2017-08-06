@@ -52,7 +52,9 @@ cd freestyle\pd_predict_master
 Ensure the example data upload file is available in the data directory, otherwise place a desired file in the data folder and update the input_filepath variable in the
 source code.  
 
-## Running the app
+## Usage
+To run the app, from the pd_predict_master working directory, in your shell:
+
 ```
 python app\pd_predict_app.py
 ```
